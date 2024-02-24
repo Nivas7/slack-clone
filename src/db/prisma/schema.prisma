@@ -1,0 +1,66 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id Int @id @default(autoincrement())
+
+  username String @unique
+
+  email String @unique
+
+  password String
+
+  messages Message[]
+
+  // Renamed the relation to avoid ambiguity
+  ownedTeams    Team[] @relation(name: "TeamOwner")
+  memberOfTeams Team[] @relation(name: "TeamMembers")
+}
+
+model Message {
+  id Int @id @default(autoincrement())
+
+  text String
+
+  channelId Int
+
+  channel Channel @relation(fields: [channelId], references: [id])
+
+  userId Int
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Team {
+  id       Int       @id @default(autoincrement())
+  name     String    @unique
+  owner    User      @relation(fields: [ownerId], references: [id], name: "TeamOwner")
+  ownerId  Int
+  channels Channel[]
+  members  User[]    @relation(name: "TeamMembers")
+}
+
+model Channel {
+  id Int @id @default(autoincrement())
+
+  name String
+
+  public Boolean
+
+  teamId Int
+
+  team     Team      @relation(fields: [teamId], references: [id])
+  messages Message[]
+}
